@@ -1,0 +1,847 @@
+:root {
+  --ink: #0b0908;
+  --parchment: #ece5d8;
+  --muted: rgba(236, 229, 216, 0.52);
+  --faint: rgba(236, 229, 216, 0.3);
+  --gold: #d4a843;
+  --gold-bright: #f2d489;
+  --violet: #8b5cf6;
+  --violet-soft: #a78bfa;
+  --ember: #ff8b3d;
+  --green: #7ee04a;
+  --line: rgba(236, 229, 216, 0.14);
+
+  --display: "Playfair Display", "Iowan Old Style", Georgia, serif;
+  --ui: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+
+  --ease: cubic-bezier(0.33, 0, 0.2, 1);
+  color-scheme: dark;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--ink);
+  color: var(--parchment);
+  font-family: var(--ui);
+  -webkit-font-smoothing: antialiased;
+  overflow: hidden;
+}
+
+button {
+  font: inherit;
+  color: inherit;
+  border: 0;
+  background: none;
+  cursor: pointer;
+}
+
+:focus-visible {
+  outline: 2px solid var(--gold-bright);
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+
+/* ── shell ─────────────────────────────────────────────────────────────── */
+
+.app {
+  position: relative;
+  height: 100%;
+  overflow: hidden;
+  background: #080706;
+}
+
+.app::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: url("/art/stone.jpg");
+  background-size: cover;
+  background-position: center;
+  /* The source photograph is small; kept quiet so it reads as texture, not blur. */
+  opacity: 0.6;
+}
+
+.app::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(120% 80% at 50% 0%, rgba(255, 139, 61, 0.07), transparent 60%),
+    radial-gradient(100% 70% at 50% 100%, rgba(139, 92, 246, 0.09), transparent 65%),
+    radial-gradient(140% 100% at 50% 50%, transparent 30%, rgba(0, 0, 0, 0.75) 100%);
+  pointer-events: none;
+}
+
+.screen {
+  position: relative;
+  z-index: 1;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  width: min(100%, 33rem);
+  margin: 0 auto;
+  padding: max(1rem, env(safe-area-inset-top)) 1.25rem
+    max(1.1rem, env(safe-area-inset-bottom));
+  gap: 1rem;
+  animation: screen-in 420ms var(--ease) both;
+}
+
+@keyframes screen-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+}
+
+.grow {
+  flex: 1;
+  min-height: 0;
+}
+
+/* The mountain waiting behind the title, barely there. */
+.intro-art {
+  position: absolute;
+  inset: auto 0 0 0;
+  width: 100%;
+  opacity: 0.42;
+  pointer-events: none;
+  user-select: none;
+  -webkit-mask-image: linear-gradient(
+    to bottom,
+    transparent 0%,
+    #000 38%,
+    #000 72%,
+    transparent 100%
+  );
+  mask-image: linear-gradient(
+    to bottom,
+    transparent 0%,
+    #000 38%,
+    #000 72%,
+    transparent 100%
+  );
+  animation: drift-in 2.4s var(--ease) both;
+}
+
+@keyframes drift-in {
+  from {
+    opacity: 0;
+    transform: scale(1.06);
+  }
+}
+
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.spread {
+  justify-content: space-between;
+}
+
+.center {
+  justify-content: center;
+}
+
+/* ── type ──────────────────────────────────────────────────────────────── */
+
+h1,
+h2,
+h3 {
+  font-family: var(--display);
+  font-weight: 700;
+  margin: 0;
+  line-height: 1.12;
+  letter-spacing: -0.01em;
+}
+
+h1 {
+  font-size: clamp(1.85rem, 7vw, 2.5rem);
+  text-shadow: 0 2px 18px rgba(0, 0, 0, 0.8);
+  background: linear-gradient(180deg, #fbf7ee 0%, #cfc6b4 62%, #8d8375 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+h2 {
+  font-size: 1.35rem;
+}
+
+.lit-word {
+  background: linear-gradient(180deg, var(--gold-bright), var(--gold));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.eyebrow {
+  font-family: var(--ui);
+  font-size: 0.66rem;
+  font-weight: 600;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--gold);
+  margin: 0;
+}
+
+.meta {
+  font-size: 0.8rem;
+  color: var(--muted);
+  margin: 0;
+  line-height: 1.45;
+}
+
+.serif {
+  font-family: var(--display);
+}
+
+/* ── ornate controls ───────────────────────────────────────────────────── */
+
+.btn {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: min(19rem, 100%);
+  aspect-ratio: 652 / 200;
+  background: url("/art/ui-button.png") center / 100% 100% no-repeat;
+  font-family: var(--display);
+  font-size: clamp(1.05rem, 4.2vw, 1.3rem);
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: var(--gold-bright);
+  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.9);
+  transition: transform 160ms var(--ease), filter 160ms var(--ease);
+  filter: drop-shadow(0 6px 22px rgba(0, 0, 0, 0.55));
+}
+
+.btn:hover {
+  filter: brightness(1.12) drop-shadow(0 6px 26px rgba(180, 120, 255, 0.28));
+}
+
+.btn:active {
+  transform: scale(0.975);
+}
+
+.btn:disabled {
+  filter: grayscale(0.7) brightness(0.6);
+  cursor: not-allowed;
+}
+
+.btn-wide {
+  width: 100%;
+  max-width: 24rem;
+}
+
+.icon-btn {
+  width: 2.9rem;
+  height: 2.9rem;
+  flex: none;
+  background: url("/art/ui-back.png") center / 100% 100% no-repeat;
+  transition: transform 160ms var(--ease), filter 160ms var(--ease);
+}
+
+.icon-btn:hover {
+  filter: brightness(1.2);
+}
+
+.icon-btn:active {
+  transform: scale(0.92);
+}
+
+.sound-btn {
+  width: 2.9rem;
+  height: 2.9rem;
+  flex: none;
+  background: url("/art/ui-sound.png") center / 100% 100% no-repeat;
+  transition: transform 160ms var(--ease), filter 160ms var(--ease),
+    opacity 200ms var(--ease);
+}
+
+.sound-btn:hover {
+  filter: brightness(1.2);
+}
+
+.sound-btn:active {
+  transform: scale(0.92);
+}
+
+.sound-btn.muted {
+  opacity: 0.42;
+  filter: grayscale(0.85);
+}
+
+.card {
+  border: 26px solid transparent;
+  border-image: url("/art/ui-card.png") 46 fill stretch;
+  padding: 0.15rem 0.5rem;
+}
+
+.card-lit {
+  filter: drop-shadow(0 0 20px rgba(139, 92, 246, 0.22));
+}
+
+.field {
+  width: 100%;
+  min-height: 6.5rem;
+  resize: none;
+  background: none;
+  border: 0;
+  outline: 0;
+  color: var(--parchment);
+  font-family: var(--display);
+  font-size: 1.5rem;
+  line-height: 1.35;
+  caret-color: var(--gold);
+}
+
+.field::placeholder {
+  color: rgba(236, 229, 216, 0.26);
+}
+
+/* ── progress dots ─────────────────────────────────────────────────────── */
+
+.dots {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.dot {
+  width: 0.55rem;
+  height: 0.55rem;
+  rotate: 45deg;
+  background: rgba(236, 229, 216, 0.22);
+  transition: background 300ms var(--ease), box-shadow 300ms var(--ease);
+}
+
+.dot.on {
+  background: linear-gradient(135deg, var(--gold-bright), var(--gold));
+  box-shadow: 0 0 10px rgba(242, 212, 137, 0.5);
+}
+
+.dot-line {
+  width: 1.6rem;
+  height: 1px;
+  background: rgba(236, 229, 216, 0.22);
+}
+
+.dot-line.on {
+  background: linear-gradient(90deg, var(--gold), rgba(212, 168, 67, 0.2));
+}
+
+/* ── the mountain ──────────────────────────────────────────────────────── */
+
+.scene {
+  position: relative;
+  overflow: hidden;
+  container-type: inline-size;
+  border-radius: 12px;
+  background: #050405;
+  box-shadow:
+    inset 0 0 0 1px rgba(236, 229, 216, 0.08),
+    0 18px 50px rgba(0, 0, 0, 0.6);
+  touch-action: manipulation;
+}
+
+.world {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  aspect-ratio: 1448 / 1086;
+  transform-origin: 0 0;
+  transform: translate(var(--tx), var(--ty)) scale(var(--z));
+  transition: transform var(--travel, 1100ms) var(--ease);
+  will-change: transform;
+}
+
+.face {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+.face.flipped {
+  transform: scaleX(-1);
+}
+
+/* The green artwork, revealed only through the steps already climbed. */
+.lit {
+  position: absolute;
+  inset: 0;
+}
+
+.far-side {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    180deg,
+    rgba(8, 5, 12, 0.34) 0%,
+    rgba(8, 5, 12, 0.52) 100%
+  );
+}
+
+/* Stand-ins for the crystals on the side the painting doesn't show. */
+.marker {
+  position: absolute;
+  translate: -50% -50%;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background:
+    radial-gradient(
+      ellipse at 50% 34%,
+      rgba(255, 255, 255, 0.22) 0%,
+      rgba(255, 255, 255, 0) 46%
+    ),
+    radial-gradient(
+      ellipse at 50% 52%,
+      rgba(168, 118, 238, 0.62) 0%,
+      rgba(101, 52, 182, 0.5) 52%,
+      rgba(64, 28, 122, 0.18) 76%,
+      rgba(60, 30, 110, 0) 100%
+    );
+  box-shadow:
+    inset 0 0 0.5cqw rgba(206, 168, 255, 0.55),
+    0 0 1.1cqw rgba(140, 80, 235, 0.3);
+  transition: background 500ms var(--ease), box-shadow 500ms var(--ease);
+}
+
+.marker.done {
+  background:
+    radial-gradient(
+      ellipse at 50% 34%,
+      rgba(255, 255, 255, 0.24) 0%,
+      rgba(255, 255, 255, 0) 46%
+    ),
+    radial-gradient(
+      ellipse at 50% 52%,
+      rgba(178, 244, 132, 0.66) 0%,
+      rgba(88, 190, 50, 0.52) 52%,
+      rgba(40, 118, 26, 0.18) 76%,
+      rgba(40, 120, 30, 0) 100%
+    );
+  box-shadow:
+    inset 0 0 0.5cqw rgba(196, 255, 160, 0.6),
+    0 0 1.1cqw rgba(110, 220, 70, 0.32);
+}
+
+.marker span {
+  font-family: var(--display);
+  font-weight: 500;
+  font-size: 2.3cqw;
+  color: rgba(255, 255, 255, 0.9);
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.8);
+  line-height: 1;
+}
+
+.scene-fixed {
+  flex: none;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+}
+
+.climber {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  transform: translate(var(--cx), var(--cy));
+  transition: transform var(--travel, 1100ms) var(--ease);
+  will-change: transform;
+  pointer-events: none;
+}
+
+.climber img {
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: var(--ch);
+  transform: translate(-50%, -100%);
+  filter: drop-shadow(0 0.4vw 0.6vw rgba(0, 0, 0, 0.65)) brightness(0.88)
+    saturate(0.95);
+}
+
+.climber.walking img {
+  animation: stride 460ms ease-in-out infinite;
+}
+
+@keyframes stride {
+  50% {
+    transform: translate(-50%, calc(-100% - 1.1%));
+  }
+}
+
+/* the moment a step lights up */
+.spark {
+  position: absolute;
+  translate: -50% -50%;
+  border-radius: 50%;
+  pointer-events: none;
+  background: radial-gradient(
+    circle,
+    rgba(220, 255, 190, 0.9) 0%,
+    rgba(126, 224, 74, 0.55) 35%,
+    rgba(126, 224, 74, 0) 70%
+  );
+  animation: spark 900ms var(--ease) forwards;
+}
+
+@keyframes spark {
+  0% {
+    opacity: 0;
+    scale: 0.35;
+  }
+  35% {
+    opacity: 1;
+    scale: 1.15;
+  }
+  100% {
+    opacity: 0;
+    scale: 1.9;
+  }
+}
+
+/* the mountain turning to show its far side */
+.turn-veil {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    120% 90% at 50% 50%,
+    rgba(6, 5, 8, 0.55),
+    rgba(4, 3, 5, 0.96)
+  );
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 420ms var(--ease);
+}
+
+.turn-veil.on {
+  opacity: 1;
+}
+
+.scene-fade {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(
+    to bottom,
+    rgba(5, 4, 5, 0.75) 0%,
+    transparent 22%,
+    transparent 70%,
+    rgba(5, 4, 5, 0.85) 100%
+  );
+}
+
+.scene-caption {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0.7rem;
+  text-align: center;
+  padding: 0 1rem;
+  animation: caption-in 520ms var(--ease) both;
+}
+
+@keyframes caption-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+
+.scene-badge {
+  position: absolute;
+  top: 0.6rem;
+  left: 0.7rem;
+  right: 0.7rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  pointer-events: none;
+}
+
+/* ── ratio strip ───────────────────────────────────────────────────────── */
+
+.ratio-bar {
+  display: flex;
+  height: 0.5rem;
+  border-radius: 99px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.07);
+  box-shadow: inset 0 0 0 1px rgba(236, 229, 216, 0.1);
+}
+
+.ratio-bar i {
+  display: block;
+  transition: width 700ms var(--ease);
+}
+
+.ratio-bar .good {
+  background: linear-gradient(90deg, var(--gold), var(--gold-bright));
+}
+
+.ratio-bar .bad {
+  background: linear-gradient(90deg, rgba(139, 92, 246, 0.75), rgba(124, 92, 200, 0.5));
+}
+
+.swatch {
+  width: 0.5rem;
+  height: 0.5rem;
+  rotate: 45deg;
+  flex: none;
+}
+
+/* ── quick add ─────────────────────────────────────────────────────────── */
+
+.panel {
+  border-radius: 14px;
+  border: 1px solid var(--line);
+  background: rgba(10, 8, 8, 0.55);
+  backdrop-filter: blur(2px);
+  padding: 0.9rem 1rem 1rem;
+}
+
+.panel.good {
+  border-color: rgba(212, 168, 67, 0.32);
+  background: linear-gradient(180deg, rgba(212, 168, 67, 0.09), rgba(10, 8, 8, 0.5));
+}
+
+.panel.bad {
+  border-color: rgba(139, 92, 246, 0.3);
+  background: linear-gradient(180deg, rgba(139, 92, 246, 0.09), rgba(10, 8, 8, 0.5));
+}
+
+.tally {
+  font-family: var(--display);
+  font-size: 2.1rem;
+  font-weight: 700;
+  line-height: 1;
+  font-variant-numeric: lining-nums;
+}
+
+.chips {
+  display: flex;
+  gap: 0.45rem;
+  flex-wrap: wrap;
+}
+
+.chip {
+  padding: 0.5rem 0.8rem;
+  min-height: 2.5rem;
+  border-radius: 99px;
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.05);
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--parchment);
+  transition: transform 140ms var(--ease), background 160ms var(--ease),
+    border-color 160ms var(--ease);
+}
+
+.chip:hover {
+  background: rgba(255, 255, 255, 0.11);
+}
+
+.chip:active {
+  transform: scale(0.94);
+}
+
+.chip.ghost {
+  color: var(--muted);
+}
+
+.option {
+  width: 100%;
+  text-align: left;
+  border-radius: 14px;
+  border: 1px solid var(--line);
+  background: rgba(10, 8, 8, 0.5);
+  padding: 0.85rem 1rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  transition: border-color 200ms var(--ease), background 200ms var(--ease);
+}
+
+.option[aria-pressed="true"] {
+  border-color: rgba(212, 168, 67, 0.65);
+  background: linear-gradient(180deg, rgba(212, 168, 67, 0.14), rgba(10, 8, 8, 0.5));
+  box-shadow: 0 0 22px rgba(212, 168, 67, 0.12);
+}
+
+.pip {
+  width: 1.1rem;
+  height: 1.1rem;
+  rotate: 45deg;
+  flex: none;
+  border: 1px solid rgba(236, 229, 216, 0.3);
+}
+
+.option[aria-pressed="true"] .pip {
+  border-color: var(--gold-bright);
+  background: linear-gradient(135deg, var(--gold-bright), var(--gold));
+  box-shadow: 0 0 12px rgba(242, 212, 137, 0.55);
+}
+
+.link {
+  color: var(--muted);
+  font-size: 0.8rem;
+  text-decoration: none;
+  border-bottom: 1px solid transparent;
+  padding: 0.35rem 0;
+  transition: color 160ms var(--ease);
+}
+
+.link:hover {
+  color: var(--gold-bright);
+}
+
+.scroll {
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+}
+
+/* ── the summit ────────────────────────────────────────────────────────── */
+
+.summit {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #060403;
+}
+
+.summit img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 42%;
+  transition: opacity 900ms var(--ease);
+}
+
+.summit .magma {
+  position: absolute;
+  inset: auto 0 0 0;
+  height: 45%;
+  background: radial-gradient(
+    100% 100% at 50% 120%,
+    rgba(255, 170, 60, 0.75),
+    rgba(255, 90, 20, 0.28) 45%,
+    transparent 75%
+  );
+  opacity: 0.5;
+  animation: magma 4.5s ease-in-out infinite;
+}
+
+@keyframes magma {
+  50% {
+    opacity: 0.9;
+  }
+}
+
+/* The drawing itself drifts down toward the magma as the ring falls away. */
+.summit img.falling {
+  animation: descend 3.4s cubic-bezier(0.4, 0, 0.5, 1) forwards;
+}
+
+@keyframes descend {
+  to {
+    transform: translateY(-7%) scale(1.09);
+  }
+}
+
+.flare {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(
+    60% 45% at 50% 96%,
+    rgba(255, 214, 140, 0.95),
+    rgba(255, 120, 30, 0.35) 45%,
+    transparent 75%
+  );
+  opacity: 0;
+  animation: flare 3.2s var(--ease) forwards;
+}
+
+@keyframes flare {
+  0%,
+  55% {
+    opacity: 0;
+  }
+  72% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0.3;
+  }
+}
+
+.toast {
+  position: absolute;
+  left: 50%;
+  bottom: 5.5rem;
+  translate: -50% 0;
+  z-index: 5;
+  padding: 0.55rem 1.1rem;
+  border-radius: 99px;
+  border: 1px solid rgba(212, 168, 67, 0.4);
+  background: rgba(12, 9, 8, 0.9);
+  font-size: 0.82rem;
+  animation: toast 2.6s var(--ease) forwards;
+  pointer-events: none;
+}
+
+@keyframes toast {
+  0% {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  12%,
+  75% {
+    opacity: 1;
+    transform: none;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

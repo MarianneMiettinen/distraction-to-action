@@ -3,3 +3,7 @@ dist/
 .env
 .env.local
 *.log
+
+# Figma export kept locally as reference; the app no longer builds on it
+design/figma-export/
+design/*.zip
