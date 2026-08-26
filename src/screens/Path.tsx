@@ -1,7 +1,15 @@
 import { Mountain } from "../Mountain";
 import { TOTAL_STEPS } from "../path";
-import { BackButton, RatioBar } from "../ui";
-import { formatMinutes, formatRatio, ratios, type Journey } from "../state";
+import { BackButton, ScreenTitle } from "../ui";
+import {
+  dateForStep,
+  daysLeft,
+  formatDay,
+  labelFor,
+  litStep,
+  pathLabels,
+  type Journey,
+} from "../state";
 
 export function Path({
   journey,
@@ -14,86 +22,55 @@ export function Path({
   onBack: () => void;
   onEdit: () => void;
 }) {
-  const { recent, opening, all } = ratios(journey);
-  const left = TOTAL_STEPS - step;
+  const here = litStep(journey);
+  const left = TOTAL_STEPS - here;
+  const ends = dateForStep(journey, TOTAL_STEPS);
 
   return (
     <div className="screen">
       <div className="row spread">
         <BackButton onClick={onBack} label="Back to the mountain" />
-        <p className="eyebrow" style={{ color: "var(--muted)" }}>
-          The whole climb
-        </p>
-        <span style={{ width: "2.9rem" }} />
+        <ScreenTitle>The whole climb</ScreenTitle>
+        <span className="spacer" />
       </div>
 
-      <Mountain step={step} view="full" className="scene-fixed" />
+      <Mountain
+        step={step}
+        view="full"
+        className="scene-fixed"
+        labels={pathLabels(journey)}
+      />
 
-      <div className="stack grow scroll" style={{ gap: ".9rem" }}>
+      <div className="stack grow scroll settle path-body">
         <div>
           <h2 className="serif">
             {left > 0 ? (
               <>
-                Step {step}. <span className="lit-word">{left} to go.</span>
+                Step {here}. <span className="lit-word">{left} to go.</span>
               </>
             ) : (
               <span className="lit-word">The summit.</span>
             )}
           </h2>
-          <p className="meta" style={{ marginTop: ".35rem" }}>
-            Green steps are days you chose {journey.pursuit || "your work"} over{" "}
-            {journey.distraction || "the pull"}. They stay green.
+          <p className="meta path-note">
+            Green steps are days you chose {labelFor(journey.pursuits) || "your work"}{" "}
+            over {labelFor(journey.distractions) || "the pull"}. They stay green.
           </p>
         </div>
 
-        <div className="panel">
-          <div className="row spread" style={{ marginBottom: ".55rem" }}>
-            <p className="eyebrow" style={{ color: "var(--muted)" }}>
-              Last 7 days
-            </p>
-            <p className="meta">
-              {recent.noLoss ? (
-                "nothing lost"
-              ) : (
-                <>
-                  <b style={{ color: "var(--gold-bright)", fontSize: "1rem" }}>
-                    {formatRatio(recent.value)}
-                  </b>{" "}
-                  toward : lost
-                </>
-              )}
+        <div className="figures">
+          <div className="figure-cell">
+            <p className="figure-value">{formatDay(dateForStep(journey, 1))}</p>
+            <p className="meta figure-label">set out</p>
+          </div>
+          <div className="figure-cell">
+            <p className="figure-value">{formatDay(ends)}</p>
+            <p className="meta figure-label">
+              {daysLeft(journey) > 0
+                ? `${daysLeft(journey)} days to go`
+                : "the summit"}
             </p>
           </div>
-          <RatioBar focus={recent.focus} distract={recent.distract} />
-          <div className="row" style={{ gap: "1rem", marginTop: ".6rem", flexWrap: "wrap" }}>
-            <span className="row" style={{ gap: ".4rem" }}>
-              <i className="swatch" style={{ background: "var(--gold)" }} />
-              <span className="meta">{formatMinutes(recent.focus)} toward</span>
-            </span>
-            <span className="row" style={{ gap: ".4rem" }}>
-              <i className="swatch" style={{ background: "var(--violet)" }} />
-              <span className="meta">{formatMinutes(recent.distract)} lost</span>
-            </span>
-          </div>
-          {opening?.value != null && recent.value != null && (
-            <p className="meta" style={{ marginTop: ".6rem" }}>
-              When you started it was{" "}
-              <b style={{ color: "var(--parchment)" }}>{formatRatio(opening.value)}</b>.{" "}
-              {recent.value > opening.value
-                ? "The balance has moved your way."
-                : "It has not moved yet — the steps still count."}
-            </p>
-          )}
-        </div>
-
-        <div className="panel">
-          <p className="eyebrow" style={{ color: "var(--muted)", marginBottom: ".5rem" }}>
-            Since you began
-          </p>
-          <p className="meta">
-            {formatMinutes(all.focus)} toward {journey.pursuit || "your work"} ·{" "}
-            {journey.days.length} {journey.days.length === 1 ? "day" : "days"} logged
-          </p>
         </div>
 
         <div className="row center">

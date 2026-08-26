@@ -3,16 +3,26 @@ import { About } from "./screens/About";
 import { Home, type Climb } from "./screens/Home";
 import { Log } from "./screens/Log";
 import {
-  AskDistraction,
-  AskGoal,
-  AskPursuit,
+  AskDistractions,
+  AskDuration,
+  AskPursuits,
   Intro,
   Reveal,
 } from "./screens/Onboarding";
 import { Path } from "./screens/Path";
+import { Records } from "./screens/Records";
 import { Summit } from "./screens/Summit";
 import { TOTAL_STEPS } from "./path";
-import { addTime, currentStep, load, save, today, type Journey } from "./state";
+import {
+  addTime,
+  load,
+  logFor,
+  save,
+  stepPosition,
+  tidy,
+  today,
+  type Journey,
+} from "./state";
 
 type View =
   | "intro"
@@ -23,6 +33,7 @@ type View =
   | "home"
   | "log"
   | "path"
+  | "records"
   | "summit"
   | "about";
 
@@ -47,12 +58,12 @@ export default function App() {
     save(next);
   }
 
-  const step = currentStep(journey);
+  const step = stepPosition(journey);
 
   function handleLog(focusMin: number, distractMin: number) {
-    const before = currentStep(journey);
+    const before = stepPosition(journey);
     const next = addTime(journey, focusMin, distractMin);
-    const after = currentStep(next);
+    const after = stepPosition(next);
 
     // Coming back after a blank day is its own small event — no streak to break.
     const previous = [...journey.days]
@@ -67,12 +78,14 @@ export default function App() {
       focusAdded: focusMin,
       moved: after > before,
       returned: !!previous && previous.focusMin === 0 && focusMin > 0,
+      // Today's step was already taken — this is extra time, not a lost day.
+      topUp: (logFor(journey, today())?.focusMin ?? 0) > 0,
     });
     setView("home");
   }
 
   function endClimb() {
-    const reached = climb?.to === TOTAL_STEPS && climb.moved;
+    const reached = climb ? climb.to >= TOTAL_STEPS && climb.moved : false;
     setClimb(null);
     if (reached && !journey.summitSeen) {
       update({ ...journey, summitSeen: true });
@@ -93,9 +106,9 @@ export default function App() {
 
     case "q1":
       body = (
-        <AskDistraction
-          value={journey.distraction}
-          onChange={(v) => setJourney((j) => ({ ...j, distraction: v }))}
+        <AskDistractions
+          values={journey.distractions}
+          onChange={(v) => setJourney((j) => ({ ...j, distractions: v }))}
           onNext={() => setView("q2")}
           onBack={() => setView(journey.onboarded ? "path" : "reveal")}
         />
@@ -104,9 +117,9 @@ export default function App() {
 
     case "q2":
       body = (
-        <AskPursuit
-          value={journey.pursuit}
-          onChange={(v) => setJourney((j) => ({ ...j, pursuit: v }))}
+        <AskPursuits
+          values={journey.pursuits}
+          onChange={(v) => setJourney((j) => ({ ...j, pursuits: v }))}
           onNext={() => setView("q3")}
           onBack={() => setView("q1")}
         />
@@ -115,11 +128,17 @@ export default function App() {
 
     case "q3":
       body = (
-        <AskGoal
-          value={journey.dailyGoalMin}
-          onChange={(v) => setJourney((j) => ({ ...j, dailyGoalMin: v }))}
+        <AskDuration
+          value={journey.totalDays}
+          onChange={(v) => setJourney((j) => ({ ...j, totalDays: v }))}
           onNext={() => {
-            update({ ...journey, onboarded: true });
+            update({
+              ...journey,
+              distractions: tidy(journey.distractions),
+              pursuits: tidy(journey.pursuits),
+              onboarded: true,
+              startDate: journey.onboarded ? journey.startDate : today(),
+            });
             setView("home");
           }}
           onBack={() => setView("q2")}
@@ -144,13 +163,22 @@ export default function App() {
       );
       break;
 
+    case "records":
+      body = <Records journey={journey} onBack={() => setView("home")} />;
+      break;
+
     case "summit":
       body = (
         <Summit
           journey={journey}
           onHome={() => setView("home")}
           onAgain={() => {
-            update({ ...journey, days: [], summitSeen: false });
+            update({
+              ...journey,
+              days: [],
+              summitSeen: false,
+              startDate: today(),
+            });
             setView("home");
           }}
         />
@@ -170,6 +198,7 @@ export default function App() {
           onClimbEnd={endClimb}
           onLog={() => setView("log")}
           onPath={() => setView("path")}
+          onRecords={() => setView("records")}
           onAbout={() => setView("about")}
         />
       );

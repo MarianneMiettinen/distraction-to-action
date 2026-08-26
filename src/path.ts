@@ -102,7 +102,37 @@ export const STEPS: Step[] = [...front.values(), ...hidden].sort(
 );
 
 export const stepAt = (n: number): Step =>
-  STEPS[Math.min(Math.max(n, 1), TOTAL_STEPS) - 1];
+  STEPS[Math.round(Math.min(Math.max(n, 1), TOTAL_STEPS)) - 1];
+
+/**
+ * Where Margorn stands for a fractional position — on a longer challenge he
+ * covers part of a step a day, so he needs to stand between the crystals.
+ * Positions never interpolate across the fold: rounding the far side of the
+ * mountain is a jump, not a slide.
+ */
+export function pointAt(pos: number): Step {
+  const clamped = Math.min(Math.max(pos, 1), TOTAL_STEPS);
+  const low = Math.floor(clamped);
+  const t = clamped - low;
+  const a = stepAt(low);
+  if (t < 0.001 || low >= TOTAL_STEPS) return a;
+  const b = stepAt(low + 1);
+  if (b.face !== a.face) return t < 0.5 ? a : b;
+  return {
+    n: a.n,
+    x: a.x + (b.x - a.x) * t,
+    y: a.y + (b.y - a.y) * t,
+    w: a.w + (b.w - a.w) * t,
+    h: a.h + (b.h - a.h) * t,
+    face: a.face,
+  };
+}
 
 /** How tall Margorn stands on a given step — smaller the higher he climbs. */
 export const climberHeight = (s: Step) => s.h * 3.15;
+
+/** First and last painted step on each side, for framing a manual spin. */
+export const faceRange = (face: Face) => {
+  const on = STEPS.filter((s) => s.face === face);
+  return { first: on[0], last: on[on.length - 1] };
+};

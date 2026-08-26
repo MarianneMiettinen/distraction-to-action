@@ -1,11 +1,25 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { play } from "./audio";
-import { STEPS, TOTAL_STEPS, climberHeight, stepAt, type Face } from "./path";
+import {
+  STEPS,
+  TOTAL_STEPS,
+  climberHeight,
+  faceRange,
+  pointAt,
+  stepAt,
+  type Face,
+} from "./path";
 
 const ART_RATIO = 1086 / 1448;
 
+export interface StepLabel {
+  step: number;
+  text: string;
+  strong?: boolean;
+}
+
 interface Props {
-  /** which step Margorn is standing on (1…30) */
+  /** where Margorn stands (1…30, fractional on longer challenges) */
   step: number;
   /** how far the green goes — trails `step` while he is still walking */
   lit?: number;
@@ -14,6 +28,10 @@ interface Props {
   walking?: boolean;
   /** step number to light up with a burst, once */
   spark?: number | null;
+  /** dates written above the path — the start, and each new month */
+  labels?: StepLabel[];
+  /** let the reader turn the mountain by hand */
+  spinnable?: boolean;
   children?: React.ReactNode;
   className?: string;
 }
@@ -21,16 +39,18 @@ interface Props {
 /**
  * The painted mountain, with a camera on it.
  *
- * Ten of the thirty steps are round the back of the spiral. When the climb
- * reaches them the mountain turns — the artwork flips to its far side behind a
- * short veil — so Margorn and the steps ahead of him are always in frame.
+ * Ten of the thirty steps are round the back of the spiral. The mountain turns
+ * to follow the climb, and can also be turned by hand — swipe it, drag it, or
+ * use the arrows — so the far side is never hidden from the reader.
  */
 export function Mountain({
   step,
-  lit = step,
+  lit = Math.floor(step),
   view = "follow",
   walking = false,
   spark = null,
+  labels = [],
+  spinnable = false,
   children,
   className = "",
 }: Props) {
@@ -41,17 +61,21 @@ export function Mountain({
     const el = scene.current;
     if (!el) return;
     const ro = new ResizeObserver(([entry]) =>
-      setBox({
-        w: entry.contentRect.width,
-        h: entry.contentRect.height,
-      })
+      setBox({ w: entry.contentRect.width, h: entry.contentRect.height })
     );
     ro.observe(el);
     return () => ro.disconnect();
   }, []);
 
-  const target = stepAt(step);
-  const wantedFace: Face = view === "full" ? "front" : target.face;
+  const target = pointAt(step);
+
+  // Turning it by hand overrides the side the climb is on, until he moves again.
+  const [spun, setSpun] = useState<Face | null>(null);
+  useEffect(() => setSpun(null), [step]);
+
+  const climbFace: Face = view === "full" ? "front" : target.face;
+  const wantedFace: Face = view === "full" ? "front" : spun ?? climbFace;
+  const showClimber = wantedFace === climbFace;
 
   // The turn: hold the old side until the veil is down, then swap.
   const [face, setFace] = useState<Face>(wantedFace);
@@ -72,16 +96,24 @@ export function Mountain({
   const worldW = box.w;
   const worldH = box.w * ART_RATIO;
 
+  // When the reader has turned away from Margorn, frame that side's own path.
+  const focusPoint = showClimber
+    ? target
+    : (() => {
+        const { first, last } = faceRange(face);
+        return {
+          x: (first.x + last.x) / 2,
+          y: (first.y + last.y) / 2,
+          h: (first.h + last.h) / 2,
+        };
+      })();
+
   let z: number;
-  let fx: number;
-  let fy: number;
   let anchorX: number;
   let anchorY: number;
 
   if (view === "full") {
     z = worldH > 0 ? Math.min(1, box.h / worldH) : 1;
-    fx = 0.5;
-    fy = 0.5;
     anchorX = 0.5;
     anchorY = 0.5;
   } else {
@@ -89,12 +121,13 @@ export function Mountain({
     // so pulling in keeps the frame full of mountain rather than empty slope.
     const base = 2 + ((step - 1) / (TOTAL_STEPS - 1)) * 2.4;
     const cover = worldH > 0 ? box.h / worldH : 1;
-    z = Math.max(base, cover + 0.02);
-    fx = target.x / 100;
-    fy = target.y / 100;
+    z = Math.max(showClimber ? base : 1.9, cover + 0.02);
     anchorX = 0.4;
     anchorY = 0.6;
   }
+
+  const fx = (view === "full" ? 50 : focusPoint.x) / 100;
+  const fy = (view === "full" ? 50 : focusPoint.y) / 100;
 
   const clamp = (v: number, lo: number, hi: number) =>
     lo > hi ? (lo + hi) / 2 : Math.min(Math.max(v, lo), hi);
@@ -118,8 +151,39 @@ export function Mountain({
   const hidden = STEPS.filter((s) => s.face === "back");
   const sparkStep = spark ? stepAt(spark) : null;
 
+  const onFace = labels.filter((l) => stepAt(l.step).face === face);
+
+  function spin() {
+    setSpun(face === "front" ? "back" : "front");
+  }
+
+  // Swipe (or drag) across the artwork turns it.
+  const swipe = useRef<{ x: number; y: number } | null>(null);
+
   return (
-    <div ref={scene} className={`scene ${className}`}>
+    <div
+      ref={scene}
+      className={`scene ${className}`}
+      onPointerDown={
+        spinnable
+          ? (e) => {
+              swipe.current = { x: e.clientX, y: e.clientY };
+            }
+          : undefined
+      }
+      onPointerUp={
+        spinnable
+          ? (e) => {
+              const from = swipe.current;
+              swipe.current = null;
+              if (!from) return;
+              const dx = e.clientX - from.x;
+              if (Math.abs(dx) > 48 && Math.abs(dx) > Math.abs(e.clientY - from.y))
+                spin();
+            }
+          : undefined
+      }
+    >
       <div
         className="world"
         style={{
@@ -175,6 +239,20 @@ export function Mountain({
             sit in the same light as the painting. */}
         {face === "back" && <div className="far-side" aria-hidden />}
 
+        {onFace.map((l) => {
+          const s = stepAt(l.step);
+          return (
+            <span
+              key={`${l.step}-${l.text}`}
+              className={`date-flag ${l.strong ? "strong" : ""}`}
+              style={{ left: `${s.x}%`, top: `${s.y - s.h * 1.7}%` }}
+              aria-hidden
+            >
+              {l.text}
+            </span>
+          );
+        })}
+
         {sparkStep && (
           <div
             key={`spark-${spark}`}
@@ -189,21 +267,56 @@ export function Mountain({
           />
         )}
 
-        <div
-          className={`climber ${walking ? "walking" : ""}`}
-          style={{
-            ["--cx" as string]: `${target.x}%`,
-            ["--cy" as string]: `${target.y + target.h * 0.1}%`,
-            ["--ch" as string]: `${climberHeight(target)}%`,
-            ["--travel" as string]: walking ? "1500ms" : "1100ms",
-          }}
-        >
-          <img src="/art/margorn.png" alt="" draggable={false} />
-        </div>
+        {showClimber && (
+          <div
+            className={`climber ${walking ? "walking" : ""}`}
+            style={{
+              ["--cx" as string]: `${target.x}%`,
+              ["--cy" as string]: `${target.y + target.h * 0.1}%`,
+              ["--ch" as string]: `${climberHeight(target)}%`,
+              ["--travel" as string]: walking ? "1500ms" : "1100ms",
+            }}
+          >
+            <img src="/art/margorn.png" alt="" draggable={false} />
+          </div>
+        )}
       </div>
 
       <div className="scene-fade" aria-hidden />
       <div className={`turn-veil ${turning ? "on" : ""}`} aria-hidden />
+
+      {spinnable && (
+        <>
+          <button
+            type="button"
+            className="spin-btn left"
+            onClick={spin}
+            aria-label={
+              face === "front"
+                ? "Turn the mountain to its far side"
+                : "Turn the mountain back to the near side"
+            }
+          >
+            ‹
+          </button>
+          <button
+            type="button"
+            className="spin-btn right"
+            onClick={spin}
+            aria-label={
+              face === "front"
+                ? "Turn the mountain to its far side"
+                : "Turn the mountain back to the near side"
+            }
+          >
+            ›
+          </button>
+          <p className={`face-tag ${face === "back" ? "on" : ""}`} aria-live="polite">
+            {face === "front" ? "Near side" : "Far side"}
+          </p>
+        </>
+      )}
+
       {children}
     </div>
   );

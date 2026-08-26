@@ -1,7 +1,14 @@
 import { useEffect, useState } from "react";
 import { play } from "../audio";
 import { OrnateButton } from "../ui";
-import { formatMinutes, formatRatio, ratios, type Journey } from "../state";
+import {
+  daysMoved,
+  formatMinutes,
+  formatRatio,
+  labelFor,
+  ratios,
+  type Journey,
+} from "../state";
 
 /** The ring goes into the magma. Two drawings, one fall between them. */
 export function Summit({
@@ -48,7 +55,7 @@ export function Summit({
 
         {phase < 2 && (
           <div className="scene-caption">
-            <p className="serif" style={{ fontSize: "1.1rem", margin: 0 }}>
+            <p className="serif scene-line">
               {phase === 0 ? "Thirty steps. The top." : "Let it go."}
             </p>
           </div>
@@ -57,13 +64,14 @@ export function Summit({
 
       {phase === 2 && (
         <>
-          <div className="stack" style={{ animation: "screen-in 600ms both" }}>
+          <div className="stack summit-copy">
             <h1>
               It is <span className="lit-word">gone.</span>
             </h1>
-            <p className="meta" style={{ fontSize: ".9rem" }}>
-              {formatMinutes(all.focus)} given to {journey.pursuit || "your work"} over{" "}
-              {journey.days.length} logged {journey.days.length === 1 ? "day" : "days"}.
+            <p className="meta lede">
+              {formatMinutes(all.focus)} given to{" "}
+              {labelFor(journey.pursuits) || "your work"} over {daysMoved(journey)}{" "}
+              {daysMoved(journey) === 1 ? "day" : "days"} that counted.
               {opening?.value != null && recent.value != null && (
                 <>
                   {" "}
@@ -74,7 +82,7 @@ export function Summit({
             </p>
           </div>
 
-          <div className="stack" style={{ alignItems: "center", gap: ".2rem" }}>
+          <div className="stack summit-actions">
             <OrnateButton wide onClick={onAgain}>
               Climb again
             </OrnateButton>

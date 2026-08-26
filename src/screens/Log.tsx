@@ -1,69 +1,91 @@
 import { useState } from "react";
-import { BackButton, OrnateButton } from "../ui";
-import { formatMinutes, logFor, today, type Journey } from "../state";
+import { play } from "../audio";
+import { BackButton, OrnateButton, ScreenTitle } from "../ui";
+import {
+  formatMinutes,
+  labelFor,
+  logFor,
+  today,
+  type Journey,
+} from "../state";
 
-const STEPS_MIN = [15, 30, 60, 120];
+const HOUR = 60;
+const MAX = 18 * HOUR;
 
 function Counter({
   tone,
   eyebrow,
   title,
   value,
-  onAdd,
-  onClear,
+  onChange,
   note,
 }: {
   tone: "good" | "bad";
   eyebrow: string;
   title: string;
   value: number;
-  onAdd: (m: number) => void;
-  onClear: () => void;
+  onChange: (v: number) => void;
   note?: string;
 }) {
-  const color = tone === "good" ? "var(--gold-bright)" : "var(--violet-soft)";
+  const set = (v: number) => onChange(Math.min(Math.max(v, 0), MAX));
+  const nudge = (delta: number) => {
+    set(value + delta);
+    play("tap");
+  };
+
   return (
     <section className={`panel ${tone}`}>
-      <p className="eyebrow" style={{ color }}>
-        {eyebrow}
-      </p>
-      <h3
-        className="serif"
-        style={{ fontSize: "1.15rem", margin: ".2rem 0 .7rem", fontWeight: 500 }}
-      >
-        {title}
-      </h3>
+      <p className="eyebrow tone-label">{eyebrow}</p>
+      <h2 className="counter-title">{title}</h2>
 
-      <div className="row spread" style={{ marginBottom: ".7rem" }}>
-        <span className="tally" style={{ color: value ? color : "var(--faint)" }}>
+      <div className="stepper" role="group" aria-label={`Time on ${title}`}>
+        <button
+          type="button"
+          className="step-btn"
+          onClick={() => nudge(-HOUR)}
+          disabled={value === 0}
+          aria-label={`One hour less on ${title}`}
+        >
+          −
+        </button>
+
+        <output className="tally" data-empty={value === 0} aria-live="polite">
           {formatMinutes(value)}
-        </span>
+        </output>
+
+        <button
+          type="button"
+          className="step-btn"
+          onClick={() => nudge(HOUR)}
+          disabled={value >= MAX}
+          aria-label={`One hour more on ${title}`}
+        >
+          +
+        </button>
+      </div>
+
+      <div className="chips">
+        <button type="button" className="chip" onClick={() => nudge(15)}>
+          +15 min
+        </button>
+        <button type="button" className="chip" onClick={() => nudge(30)}>
+          +30 min
+        </button>
         {value > 0 && (
-          <button type="button" className="chip ghost" onClick={onClear}>
+          <button
+            type="button"
+            className="chip ghost"
+            onClick={() => {
+              set(0);
+              play("back");
+            }}
+          >
             Clear
           </button>
         )}
       </div>
 
-      <div className="chips">
-        {STEPS_MIN.map((m) => (
-          <button
-            key={m}
-            type="button"
-            className="chip"
-            onClick={() => onAdd(m)}
-            aria-label={`Add ${formatMinutes(m)} to ${title}`}
-          >
-            +{m < 60 ? `${m} min` : `${m / 60} h`}
-          </button>
-        ))}
-      </div>
-
-      {note && (
-        <p className="meta" style={{ marginTop: ".6rem", color }}>
-          {note}
-        </p>
-      )}
+      {note && <p className={`meta note-${tone}`}>{note}</p>}
     </section>
   );
 }
@@ -81,42 +103,32 @@ export function Log({
   const [distract, setDistract] = useState(0);
   const existing = logFor(journey, today());
 
-  const goalHit = focus > 0 && focus + (existing?.focusMin ?? 0) >= journey.dailyGoalMin;
-
   return (
     <div className="screen">
       <div className="row spread">
         <BackButton onClick={onCancel} label="Back to the mountain" />
-        <p className="eyebrow" style={{ color: "var(--muted)" }}>
-          {existing ? "Add to today" : "Today"}
-        </p>
-        <span style={{ width: "2.9rem" }} />
+        <ScreenTitle>{existing ? "Add to today" : "Today"}</ScreenTitle>
+        <span className="spacer" />
       </div>
 
-      <div className="stack grow scroll">
+      <div className="stack grow scroll settle">
         <Counter
           tone="good"
           eyebrow="Toward what matters"
-          title={journey.pursuit || "Your work"}
+          title={labelFor(journey.pursuits) || "Your work"}
           value={focus}
-          onAdd={(m) => setFocus((v) => Math.min(v + m, 24 * 60))}
-          onClear={() => setFocus(0)}
+          onChange={setFocus}
           note={
-            goalHit
-              ? "That is a good day by your own measure."
-              : focus > 0
-              ? "Any time at all moves Margorn one step."
-              : undefined
+            focus > 0 ? "Any time at all moves Margorn forward." : undefined
           }
         />
 
         <Counter
           tone="bad"
           eyebrow="Lost to the pull"
-          title={journey.distraction || "Your distraction"}
+          title={labelFor(journey.distractions) || "Your distraction"}
           value={distract}
-          onAdd={(m) => setDistract((v) => Math.min(v + m, 24 * 60))}
-          onClear={() => setDistract(0)}
+          onChange={setDistract}
           note={
             distract > 0
               ? "Worth knowing. It costs you nothing on the climb."
@@ -124,9 +136,14 @@ export function Log({
           }
         />
 
+        <p className="meta hint">
+          Turning up every day for a little beats three big days and a week of
+          nothing — the climb counts days, not hours.
+        </p>
+
         {existing && (
-          <p className="meta" style={{ textAlign: "center" }}>
-            Already logged today: {formatMinutes(existing.focusMin)} toward,{" "}
+          <p className="meta hint">
+            Already today: {formatMinutes(existing.focusMin)} toward,{" "}
             {formatMinutes(existing.distractMin)} lost.
           </p>
         )}

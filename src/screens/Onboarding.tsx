@@ -1,20 +1,22 @@
 import { BackButton, Dots, OrnateButton, SoundButton, StoneCard } from "../ui";
+import { DURATIONS, type Duration } from "../state";
 
 export function Intro({ onNext }: { onNext: () => void }) {
   return (
     <div className="screen">
       <img className="intro-art" src="/art/mountain.jpg" alt="" aria-hidden />
-      <div className="grow" style={{ display: "flex", flexDirection: "column", justifyContent: "center", gap: "1.1rem" }}>
+      <div className="grow intro-copy">
         <p className="eyebrow">Distraction to Action</p>
         <h1>
           Thirty steps out of <span className="lit-word">the noise</span>.
         </h1>
-        <p className="meta" style={{ fontSize: "0.95rem", maxWidth: "26rem" }}>
-          Every hour you give to what matters moves you one step up the mountain.
-          Nothing else moves you — and nothing ever pushes you back down.
+        <p className="meta lede">
+          Every day you give any time at all to what matters moves you one step
+          up the mountain. Nothing else moves you — and nothing ever pushes you
+          back down.
         </p>
       </div>
-      <div className="row center" style={{ paddingBottom: "1rem" }}>
+      <div className="row center intro-cta">
         <OrnateButton onClick={onNext}>Begin</OrnateButton>
       </div>
     </div>
@@ -24,36 +26,22 @@ export function Intro({ onNext }: { onNext: () => void }) {
 export function Reveal({ onNext, onBack }: { onNext: () => void; onBack: () => void }) {
   return (
     <div className="screen">
-      <div className="row">
+      <div className="row spread">
         <BackButton onClick={onBack} />
+        <SoundButton />
       </div>
 
-      <div className="grow" style={{ position: "relative", borderRadius: 12, overflow: "hidden" }}>
+      <div className="grow reveal-frame">
         <img
+          className="reveal-art"
           src="/art/margorn-front.jpg"
           alt="Margorn, a young climber holding a glowing blue sword and a golden ring on a chain"
-          style={{
-            position: "absolute",
-            inset: 0,
-            width: "100%",
-            height: "100%",
-            objectFit: "cover",
-            objectPosition: "center 30%",
-          }}
         />
-        <div
-          aria-hidden
-          style={{
-            position: "absolute",
-            inset: 0,
-            background:
-              "linear-gradient(to bottom, rgba(8,6,5,.7) 0%, transparent 25%, transparent 45%, rgba(8,6,5,.92) 95%)",
-          }}
-        />
-        <div style={{ position: "absolute", left: 0, right: 0, bottom: "1.1rem", padding: "0 1.2rem" }}>
+        <div className="reveal-veil" aria-hidden />
+        <div className="reveal-copy">
           <p className="eyebrow">Your climber</p>
-          <h2 style={{ marginTop: ".3rem" }}>This is Margorn.</h2>
-          <p className="meta" style={{ marginTop: ".45rem" }}>
+          <h2 className="reveal-name">This is Margorn.</h2>
+          <p className="meta reveal-text">
             He carries the ring you are trying to be rid of. He climbs only when
             you do something that matters — however small.
           </p>
@@ -67,12 +55,14 @@ export function Reveal({ onNext, onBack }: { onNext: () => void; onBack: () => v
   );
 }
 
-function Question({
+function TwoThings({
   index,
   heading,
   highlight,
-  placeholder,
-  value,
+  hint,
+  first,
+  second,
+  values,
   onChange,
   onNext,
   onBack,
@@ -81,14 +71,29 @@ function Question({
   index: number;
   heading: string;
   highlight: string;
-  placeholder: string;
-  value: string;
-  onChange: (v: string) => void;
+  hint: string;
+  first: string;
+  second: string;
+  values: string[];
+  onChange: (v: string[]) => void;
   onNext: () => void;
   onBack: () => void;
   cta?: string;
 }) {
+  const one = values[0] ?? "";
+  const two = values[1] ?? "";
   const id = `q${index}`;
+
+  const set = (i: number, v: string) => {
+    const next = [one, two];
+    next[i] = v.replace(/\n/g, "");
+    onChange(next);
+  };
+
+  const advance = () => {
+    if (one.trim()) onNext();
+  };
+
   return (
     <div className="screen">
       <div className="row spread">
@@ -97,33 +102,44 @@ function Question({
         <SoundButton />
       </div>
 
-      <label htmlFor={id}>
-        <h1>
-          {heading} <span className="lit-word">{highlight}</span>
-        </h1>
-      </label>
+      <h1 id={`${id}-heading`}>
+        {heading} <span className="lit-word">{highlight}</span>
+      </h1>
+      <p className="meta">{hint}</p>
 
-      <StoneCard lit className="grow" >
-        <textarea
-          id={id}
-          className="field"
-          style={{ height: "100%" }}
-          value={value}
-          placeholder={placeholder}
-          autoFocus
-          maxLength={80}
-          onChange={(e) => onChange(e.target.value.replace(/\n/g, ""))}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") {
-              e.preventDefault();
-              if (value.trim()) onNext();
-            }
-          }}
-        />
+      <StoneCard lit className="grow">
+        <div className="fields" role="group" aria-labelledby={`${id}-heading`}>
+          <label className="field-row">
+            <span className="sr-only">{first}</span>
+            <input
+              className="field"
+              value={one}
+              placeholder={first}
+              autoFocus
+              maxLength={40}
+              enterKeyHint="next"
+              onChange={(e) => set(0, e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && advance()}
+            />
+          </label>
+
+          <label className="field-row" hidden={!one.trim()}>
+            <span className="sr-only">{second}</span>
+            <input
+              className="field"
+              value={two}
+              placeholder={second}
+              maxLength={40}
+              enterKeyHint="done"
+              onChange={(e) => set(1, e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && advance()}
+            />
+          </label>
+        </div>
       </StoneCard>
 
       <div className="row center">
-        <OrnateButton onClick={onNext} disabled={!value.trim()}>
+        <OrnateButton onClick={advance} disabled={!one.trim()}>
           {cta}
         </OrnateButton>
       </div>
@@ -131,55 +147,52 @@ function Question({
   );
 }
 
-export function AskDistraction(p: {
-  value: string;
-  onChange: (v: string) => void;
+export function AskDistractions(p: {
+  values: string[];
+  onChange: (v: string[]) => void;
   onNext: () => void;
   onBack: () => void;
 }) {
   return (
-    <Question
+    <TwoThings
       index={1}
       heading="What pulls you away from what"
       highlight="matters?"
-      placeholder="scrolling, TV, the news…"
+      hint="One or two. Naming more than that just blurs them."
+      first="scrolling my phone"
+      second="and one more (optional)"
       {...p}
     />
   );
 }
 
-export function AskPursuit(p: {
-  value: string;
-  onChange: (v: string) => void;
+export function AskPursuits(p: {
+  values: string[];
+  onChange: (v: string[]) => void;
   onNext: () => void;
   onBack: () => void;
 }) {
   return (
-    <Question
+    <TwoThings
       index={2}
       heading="What do you want to give your"
       highlight="hours to?"
-      placeholder="job applications, writing, training…"
+      hint="One or two. These are what Margorn climbs for."
+      first="job applications"
+      second="and one more (optional)"
       {...p}
     />
   );
 }
 
-const GOALS = [
-  { min: 15, label: "15 minutes", sub: "A foot in the door" },
-  { min: 30, label: "30 minutes", sub: "A real dent" },
-  { min: 60, label: "1 hour", sub: "A proper session" },
-  { min: 120, label: "2 hours", sub: "A deep day" },
-];
-
-export function AskGoal({
+export function AskDuration({
   value,
   onChange,
   onNext,
   onBack,
 }: {
-  value: number;
-  onChange: (v: number) => void;
+  value: Duration;
+  onChange: (v: Duration) => void;
   onNext: () => void;
   onBack: () => void;
 }) {
@@ -192,28 +205,32 @@ export function AskGoal({
       </div>
 
       <h1>
-        How much in a day would feel like a <span className="lit-word">good day?</span>
+        How long is the <span className="lit-word">climb?</span>
       </h1>
       <p className="meta">
-        Any time at all still moves Margorn. This is only the size of a day you
-        would be glad about.
+        The mountain is always thirty steps. A longer challenge means Margorn
+        covers less ground each day — turning up daily still moves him every
+        single time.
       </p>
 
-      <div className="stack grow scroll" style={{ paddingTop: ".2rem" }}>
-        {GOALS.map((g) => (
+      <div
+        className="stack grow scroll settle options"
+        role="radiogroup"
+        aria-label="Length of the climb"
+      >
+        {DURATIONS.map((d) => (
           <button
-            key={g.min}
+            key={d.days}
             type="button"
+            role="radio"
             className="option"
-            aria-pressed={value === g.min}
-            onClick={() => onChange(g.min)}
+            aria-checked={value === d.days}
+            onClick={() => onChange(d.days)}
           >
             <span>
-              <span className="serif" style={{ fontSize: "1.2rem", fontWeight: 700 }}>
-                {g.label}
-              </span>
+              <span className="option-title">{d.label}</span>
               <br />
-              <span className="meta">{g.sub}</span>
+              <span className="meta">{d.pace}</span>
             </span>
             <i className="pip" />
           </button>

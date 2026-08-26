@@ -6,16 +6,18 @@ export function OrnateButton({
   onClick,
   disabled,
   wide,
+  small,
 }: {
   children: ReactNode;
   onClick?: () => void;
   disabled?: boolean;
   wide?: boolean;
+  small?: boolean;
 }) {
   return (
     <button
       type="button"
-      className={`btn ${wide ? "btn-wide" : ""}`}
+      className={`btn ${wide ? "btn-wide" : ""} ${small ? "btn-sm" : ""}`}
       onClick={() => {
         wakeAudio();
         play("tap");
@@ -40,6 +42,11 @@ export function BackButton({ onClick, label = "Back" }: { onClick: () => void; l
       aria-label={label}
     />
   );
+}
+
+/** Each screen's own heading — small, but it is the page's h1. */
+export function ScreenTitle({ children }: { children: ReactNode }) {
+  return <h1 className="eyebrow screen-title">{children}</h1>;
 }
 
 export function SoundButton() {

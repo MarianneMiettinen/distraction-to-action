@@ -1,12 +1,16 @@
 # Distraction to Action
 
-A thirty-step climb. You say what pulls you away and what deserves your hours;
-every day you give any time at all to the second one, Margorn takes a step up
-the mountain and that step turns from purple to green. Steps already climbed
-stay green. Nothing ever pushes him back down.
+A thirty-step climb. You name one or two things that pull you away and one or
+two that deserve your hours; every day you give any time at all to the second
+kind, Margorn gains ground and the step he reaches turns from purple to green.
+Steps already climbed stay green. Nothing ever pushes him back down.
 
 The point is not a productivity dashboard. It is visible evidence that
-deliberate choices are accumulating.
+deliberate choices are accumulating — and that the ratio of time given to time
+lost is moving the right way.
+
+Turning up daily for a little beats three big days and a week of nothing: the
+climb counts days, not hours.
 
 ## Running it
 
@@ -37,14 +41,20 @@ the steps have to change colour. `tools/prepare_assets.py` handles both:
   climbed, so a completed step keeps the original brushwork instead of being
   covered by a flat CSS shape.
 
-Ten of the thirty steps are round the back of the spiral. When the climb reaches
-them the mountain turns: the artwork flips to its mirrored side behind a short
-veil, held in shadow, with drawn markers standing in for the crystals the
-painting does not show. The camera is a single GPU transform on one layer, so
-the walk stays smooth.
+Ten of the thirty steps are round the back of the spiral. The mountain turns to
+follow the climb, and can be turned by hand — swipe it, or use the arrows on
+either side — so the far side is never hidden. Turning flips the artwork to its
+mirrored side behind a short veil and holds it in shadow, with drawn markers
+standing in for the crystals the painting does not show. The camera is a single
+GPU transform on one layer, so the walk stays smooth.
 
 Step coordinates in `src/path.ts` were measured by clustering the purple pixels
 of the painting, not estimated by eye.
+
+The mountain is always thirty steps because its crystals are painted and
+numbered. A longer challenge therefore means Margorn covers a fraction of a step
+each day rather than a whole one — he still moves every single day, which is the
+part that matters. `src/state.ts` holds that mapping.
 
 Re-run the asset pipeline after editing anything in `design/`:
 

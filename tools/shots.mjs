@@ -105,10 +105,13 @@ const seed = (n, { skipToday = false, ...extra } = {}) => {
       distractMin: Math.round(200 - t * 150),
     });
   }
+  const start = new Date();
+  start.setDate(start.getDate() - n - (skipToday ? 1 : 0) + 1);
   return JSON.stringify({
-    distraction: "scrolling my phone",
-    pursuit: "job applications",
-    dailyGoalMin: 30,
+    distractions: ["scrolling my phone", "the news"],
+    pursuits: ["job applications", "writing"],
+    totalDays: 30,
+    startDate: start.toISOString().slice(0, 10),
     days,
     onboarded: true,
     summitSeen: false,
@@ -148,22 +151,32 @@ const clickText = async (text, wait = 900) => {
 };
 
 // ── onboarding ──────────────────────────────────────────────────────────────
+const fill = (value, index = 0) =>
+  evaluate(
+    `(() => { const t = document.querySelectorAll('input.field')[${index}];
+       if (!t) return;
+       const set = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype,'value').set;
+       set.call(t, ${JSON.stringify(value)});
+       t.dispatchEvent(new Event('input', { bubbles: true })); })()`
+  );
+
 await go("/");
 await shot("01-intro");
 await clickText("Begin");
 await shot("02-reveal");
 await clickText("Continue");
-await evaluate(
-  `(() => { const t = document.querySelector('textarea');
-     const set = Object.getOwnPropertyDescriptor(window.HTMLTextAreaElement.prototype,'value').set;
-     set.call(t, 'scrolling my phone');
-     t.dispatchEvent(new Event('input', { bubbles: true })); })()`
-);
+await fill("scrolling my phone");
+await sleep(300);
+await fill("the news", 1);
 await sleep(400);
 await shot("03-question");
 await clickText("Continue");
+await sleep(400);
+await fill("job applications");
+await sleep(300);
+await clickText("Continue");
 await sleep(500);
-await shot("04-goal-skipped");
+await shot("04-duration");
 
 // ── the climb ───────────────────────────────────────────────────────────────
 await go("/", seed(1));
@@ -197,12 +210,19 @@ await shot("13-climb-settled");
 
 // ── path + summit + about ───────────────────────────────────────────────────
 await go("/", seed(9));
-await clickText("See the whole climb", 900);
+await clickText("The whole climb", 900);
 await shot("14-path");
 
 await go("/", seed(9));
 await clickText("Attributions", 700);
 await shot("15-about");
+
+await go("/", seed(12));
+await clickText("Records", 900);
+await shot("19-records");
+await evaluate(`document.querySelector('.scroll').scrollTop = 640`);
+await sleep(400);
+await shot("20-records-runes");
 
 await go("/", seed(28, { skipToday: true }));
 await click(".btn", 700);
