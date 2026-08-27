@@ -320,6 +320,40 @@ h2 {
   filter: drop-shadow(0 0 20px rgba(139, 92, 246, 0.22));
 }
 
+/* The same carved frame at panel scale — the 46px slice squeezed into a
+   thinner border, so the ornament shrinks with it instead of eating the box. */
+.card-panel {
+  position: relative;
+  border: 17px solid transparent;
+  border-image: url("/art/ui-card.png") 46 fill stretch;
+  padding: 0.35rem 0.6rem 0.5rem;
+  filter: drop-shadow(0 0 16px rgba(139, 92, 246, 0.16));
+}
+
+/* The magic in the frame breathes rather than sits still. */
+.card-panel::after {
+  content: "";
+  position: absolute;
+  inset: -17px;
+  border-radius: 12px;
+  pointer-events: none;
+  box-shadow: inset 0 0 22px rgba(160, 96, 255, 0.16);
+  animation: rune-breath 6s ease-in-out infinite;
+}
+
+@keyframes rune-breath {
+  50% {
+    box-shadow: inset 0 0 34px rgba(180, 120, 255, 0.3);
+  }
+}
+
+/* The stat cells get the frame too, at the smallest size it still reads. */
+.card-cell {
+  border: 13px solid transparent;
+  border-image: url("/art/ui-card.png") 46 fill stretch;
+  padding: 0.15rem 0.45rem 0.35rem;
+}
+
 /* Sized to the two lines it holds, so the stone frame is not mostly empty. */
 .card-compact {
   flex: none;
@@ -949,8 +983,6 @@ h1.app-name {
 
 /* Every surface in the app is a slab of the same stone: the photograph itself,
    darkened, with a lit top edge so it reads as carved rather than as a card. */
-.panel,
-.figure-cell,
 .rune,
 .option {
   border-radius: 14px;
@@ -969,6 +1001,19 @@ h1.app-name {
 }
 
 .panel {
+  border-radius: 14px;
+  border: 1px solid var(--line);
+  background-color: rgba(10, 8, 8, 0.72);
+  background-image: linear-gradient(
+      180deg,
+      rgba(18, 14, 13, 0.7),
+      rgba(6, 5, 5, 0.88)
+    ),
+    url("/art/stone.jpg");
+  background-size: auto, 190% auto;
+  background-position: center, center;
+  box-shadow: inset 0 1px 0 rgba(236, 229, 216, 0.1),
+    0 2px 10px rgba(0, 0, 0, 0.35);
   padding: 0.9rem 1rem 1rem;
 }
 
@@ -1218,96 +1263,120 @@ h1.app-name {
 .stride {
   justify-content: center;
   align-items: center;
-  gap: 1.6rem;
+  gap: 1.4rem;
   cursor: pointer;
 }
 
+/* He turns to face you and the frame closes in. */
 .stride-stage {
   position: relative;
   flex: none;
   width: 100%;
-  height: min(58vh, 26rem);
-  display: grid;
-  place-items: end center;
+  height: min(62vh, 30rem);
+  border-radius: 14px;
+  overflow: hidden;
+  background: #0a0807;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.65);
 }
 
-.stride-glow {
-  position: absolute;
-  left: 50%;
-  bottom: 4%;
-  width: 78%;
-  height: 32%;
-  translate: -50% 0;
-  border-radius: 50%;
-  background: radial-gradient(
-    ellipse at center,
-    rgba(212, 168, 67, 0.22) 0%,
-    rgba(139, 92, 246, 0.12) 45%,
-    transparent 72%
-  );
-  animation: stride-glow 1.25s var(--ease) both;
-}
-
-@keyframes stride-glow {
-  from {
-    opacity: 0;
-    transform: scale(0.6);
-  }
-}
-
-.stride-figure {
-  position: relative;
-  height: 100%;
+.stride-face {
   width: 100%;
-  object-fit: contain;
-  object-position: bottom center;
-  transform-origin: 50% 100%;
-  filter: drop-shadow(0 1rem 1.4rem rgba(0, 0, 0, 0.7)) brightness(0.92);
-  animation: stride 1.25s cubic-bezier(0.22, 0.7, 0.3, 1) both;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 24%;
+  transform-origin: 50% 32%;
+  animation: push-in 1.4s cubic-bezier(0.24, 0.6, 0.28, 1) both;
 }
 
-@keyframes stride {
+@keyframes push-in {
   0% {
     opacity: 0;
-    transform: scale(0.5) translateY(7%);
+    transform: scale(1);
   }
-  22% {
+  18% {
     opacity: 1;
   }
   100% {
     opacity: 1;
-    transform: scale(1) translateY(0);
+    transform: scale(1.34);
   }
 }
 
-/* A blank day: he arrives, but he does not grow into the frame. */
-.stride-figure.still {
-  animation: stride-still 1.25s var(--ease) both;
-  filter: drop-shadow(0 1.4rem 1.6rem rgba(0, 0, 0, 0.7)) brightness(0.72)
-    saturate(0.7);
+/* A blank day: he still faces you, but the frame does not close in. */
+.stride-stage.still .stride-face {
+  animation: push-in-still 1.4s var(--ease) both;
+  filter: brightness(0.66) saturate(0.62);
 }
 
-@keyframes stride-still {
+@keyframes push-in-still {
   0% {
     opacity: 0;
-    transform: scale(0.72);
+    transform: scale(1.04);
   }
   30%,
   100% {
     opacity: 1;
-    transform: scale(0.78);
+    transform: scale(1.06);
   }
+}
+
+.stride-vignette {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(
+      120% 90% at 50% 38%,
+      transparent 42%,
+      rgba(6, 4, 4, 0.9) 100%
+    ),
+    linear-gradient(to bottom, rgba(6, 4, 4, 0.55) 0%, transparent 22%);
+}
+
+/* The ring at his hip catches the light as he arrives. */
+.stride-flare {
+  position: absolute;
+  left: 26%;
+  top: 62%;
+  width: 34%;
+  height: 26%;
+  translate: -50% -50%;
+  pointer-events: none;
+  border-radius: 50%;
+  background: radial-gradient(
+    ellipse at center,
+    rgba(255, 206, 120, 0.4) 0%,
+    rgba(212, 168, 67, 0.16) 45%,
+    transparent 72%
+  );
+  animation: stride-flare 1.4s var(--ease) both;
+}
+
+@keyframes stride-flare {
+  0%,
+  35% {
+    opacity: 0;
+  }
+  70% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0.5;
+  }
+}
+
+.stride-stage.still .stride-flare {
+  display: none;
 }
 
 h1.stride-word {
   font-family: var(--display);
-  font-size: 1.2rem;
+  font-size: 1.25rem;
   font-weight: 500;
   color: var(--parchment);
   background: none;
   -webkit-text-fill-color: currentColor;
   text-shadow: 0 2px 12px rgba(0, 0, 0, 0.9);
-  animation: caption-in 700ms 380ms var(--ease) both;
+  animation: caption-in 700ms 420ms var(--ease) both;
 }
 
 /* ── records ───────────────────────────────────────────────────────────── */
@@ -1339,7 +1408,8 @@ h1.stride-word {
 }
 
 .figure-cell {
-  padding: 0.8rem 0.9rem;
+  padding: 0.55rem 0.35rem 0.7rem;
+  text-align: center;
 }
 
 .figure-cell.wide {

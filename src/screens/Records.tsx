@@ -218,7 +218,7 @@ export function Records({
           <Figure value={formatMinutes(all.focus)} label={`toward ${pursuit}`} wide />
         </div>
 
-        <section className="panel">
+        <section className="card-panel">
           <div className="row spread panel-head">
             <h2 className="eyebrow screen-title">Last 7 days</h2>
             <p className="meta">
@@ -254,12 +254,12 @@ export function Records({
         </section>
 
         {journey.days.length >= 2 ? (
-          <section className="panel">
+          <section className="card-panel">
             <h2 className="eyebrow screen-title panel-head">Day by day</h2>
             <Trace journey={journey} />
           </section>
         ) : (
-          <section className="panel empty">
+          <section className="card-panel empty">
             <p className="meta">
               Log a second day and the shape of the climb starts showing up
               here.
@@ -308,7 +308,7 @@ function Figure({
   wide?: boolean;
 }) {
   return (
-    <div className={`figure-cell ${wide ? "wide" : ""}`}>
+    <div className={`figure-cell card-cell ${wide ? "wide" : ""}`}>
       <p className="figure-value">{value}</p>
       <p className="meta figure-label">{label}</p>
     </div>

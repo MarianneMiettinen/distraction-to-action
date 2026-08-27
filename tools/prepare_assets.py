@@ -98,8 +98,8 @@ def build_mountain():
 
 
 # ------------------------------------------------------------------ sprite ---
-def build_sprite():
-    im = src("margorn-polished-side.png").convert("RGB")
+def build_sprite(source="margorn-polished-side.png", out="margorn.png", scale=2):
+    im = src(source).convert("RGB")
     a = np.asarray(im).astype(int)
     mn, mx = a.min(axis=2), a.max(axis=2)
 
@@ -122,9 +122,9 @@ def build_sprite():
     img = Image.fromarray(rgba, "RGBA")
     img = img.crop(img.getchannel("A").getbbox())
     img.putalpha(img.getchannel("A").filter(ImageFilter.GaussianBlur(0.7)))
-    img = img.resize((img.width // 2, img.height // 2), Image.LANCZOS)
-    img.save(os.path.join(OUT, "margorn.png"), optimize=True)
-    print("margorn.png", img.size)
+    img = img.resize((img.width // scale, img.height // scale), Image.LANCZOS)
+    img.save(os.path.join(OUT, out), optimize=True)
+    print(out, img.size)
 
 
 # ---------------------------------------------------------------- UI frames ---

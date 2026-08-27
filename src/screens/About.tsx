@@ -10,7 +10,7 @@ export function About({ onBack }: { onBack: () => void }) {
       </div>
 
       <div className="stack grow scroll records">
-        <section className="panel">
+        <section className="card-panel">
           <h2 className="eyebrow screen-title panel-head">
             Artwork
           </h2>
@@ -21,7 +21,7 @@ export function About({ onBack }: { onBack: () => void }) {
           </p>
         </section>
 
-        <section className="panel">
+        <section className="card-panel">
           <h2 className="eyebrow screen-title panel-head">
             Background photograph
           </h2>
@@ -48,7 +48,7 @@ export function About({ onBack }: { onBack: () => void }) {
           </p>
         </section>
 
-        <section className="panel">
+        <section className="card-panel">
           <h2 className="eyebrow screen-title panel-head">
             Music and sound
           </h2>
@@ -59,7 +59,7 @@ export function About({ onBack }: { onBack: () => void }) {
           </p>
         </section>
 
-        <section className="panel">
+        <section className="card-panel">
           <h2 className="eyebrow screen-title panel-head">
             Your climb
           </h2>
