@@ -198,21 +198,46 @@ await shot("09-home-step27");
 await go("/", seed(6, { skipToday: true }));
 await click(".btn", 700);
 await shot("10-log");
-await evaluate(
-  `[...document.querySelectorAll('.chip')].find(c => c.textContent.includes('1 h'))?.click()`
-);
+const addHour = () =>
+  evaluate(`document.querySelectorAll('.step-btn')[1]?.click()`);
+await addHour();
 await sleep(400);
 await shot("11-log-filled");
 await click(".btn", 700);
-await shot("12-climbing");
-await sleep(1600);
+await shot("12-stride");
+await sleep(1400);
+await shot("12b-climbing");
+await sleep(1500);
 await shot("13-climb-settled");
 
-// ── path + summit + about ───────────────────────────────────────────────────
-await go("/", seed(9));
-await clickText("The whole climb", 900);
-await shot("14-path");
+// blank day → the step ahead catches fire
+const blank = (n) => {
+  const state = JSON.parse(seed(n, { skipToday: true }));
+  state.days[state.days.length - 1].focusMin = 0;
+  return JSON.stringify(state);
+};
 
+const addLostHour = () =>
+  evaluate(`document.querySelectorAll('.step-btn')[3]?.click()`);
+
+await go("/", blank(8));
+await shot("21-home-missed");
+await click(".btn", 700);
+await addLostHour();                 // a day that went entirely to the pull
+await sleep(300);
+await click(".btn", 900);
+await shot("22-blank-stride");
+await sleep(1500);
+await shot("23-blank-red");
+
+await go("/", blank(8));
+await click(".btn", 700);
+await addHour();
+await sleep(300);
+await click(".btn", 2000);           // returning after the blank day
+await shot("24-return-blue");
+
+// ── path + summit + about ───────────────────────────────────────────────────
 await go("/", seed(9));
 await clickText("Attributions", 700);
 await shot("15-about");
@@ -226,11 +251,9 @@ await shot("20-records-runes");
 
 await go("/", seed(28, { skipToday: true }));
 await click(".btn", 700);
-await evaluate(
-  `[...document.querySelectorAll('.chip')].find(c => c.textContent.includes('1 h'))?.click()`
-);
+await addHour();
 await sleep(300);
-await click(".btn", 4400);
+await click(".btn", 5600);
 await shot("16-summit-hold");
 await sleep(2600);
 await shot("17-summit-fall");

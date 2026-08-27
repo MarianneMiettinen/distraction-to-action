@@ -132,6 +132,16 @@ export const litStep = (j: Journey) => Math.floor(stepPosition(j));
 
 export const atSummit = (j: Journey) => stepPosition(j) >= TOTAL_STEPS;
 
+/**
+ * A blank day leaves the step ahead burning red until you come back to it —
+ * the day is marked on the mountain, but nothing is taken away.
+ */
+export function missedStep(j: Journey): number | null {
+  const last = sortedDays(j).pop();
+  if (!last || last.focusMin > 0) return null;
+  return Math.min(Math.floor(stepPosition(j)) + 1, TOTAL_STEPS);
+}
+
 export const daysLeft = (j: Journey) =>
   Math.max(j.totalDays - 1 - daysMoved(j), 0);
 

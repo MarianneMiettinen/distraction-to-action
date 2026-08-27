@@ -9,14 +9,15 @@ import {
   Intro,
   Reveal,
 } from "./screens/Onboarding";
-import { Path } from "./screens/Path";
 import { Records } from "./screens/Records";
+import { Stride } from "./screens/Stride";
 import { Summit } from "./screens/Summit";
 import { TOTAL_STEPS } from "./path";
 import {
   addTime,
   load,
   logFor,
+  missedStep,
   save,
   stepPosition,
   tidy,
@@ -32,7 +33,7 @@ type View =
   | "q3"
   | "home"
   | "log"
-  | "path"
+  | "stride"
   | "records"
   | "summit"
   | "about";
@@ -62,14 +63,10 @@ export default function App() {
 
   function handleLog(focusMin: number, distractMin: number) {
     const before = stepPosition(journey);
+    // Whether a step was burning red decides the colour of what happens next.
+    const burning = missedStep(journey);
     const next = addTime(journey, focusMin, distractMin);
     const after = stepPosition(next);
-
-    // Coming back after a blank day is its own small event — no streak to break.
-    const previous = [...journey.days]
-      .filter((d) => d.date !== today())
-      .sort((a, b) => a.date.localeCompare(b.date))
-      .pop();
 
     update(next);
     setClimb({
@@ -77,11 +74,13 @@ export default function App() {
       to: after,
       focusAdded: focusMin,
       moved: after > before,
-      returned: !!previous && previous.focusMin === 0 && focusMin > 0,
+      // Walking onto a step a blank day left burning is a recovery, not a
+      // streak — it reads blue, whether the blank day was today or last week.
+      returned: burning !== null && focusMin > 0 && after > before,
       // Today's step was already taken — this is extra time, not a lost day.
       topUp: (logFor(journey, today())?.focusMin ?? 0) > 0,
     });
-    setView("home");
+    setView("stride");
   }
 
   function endClimb() {
@@ -110,7 +109,7 @@ export default function App() {
           values={journey.distractions}
           onChange={(v) => setJourney((j) => ({ ...j, distractions: v }))}
           onNext={() => setView("q2")}
-          onBack={() => setView(journey.onboarded ? "path" : "reveal")}
+          onBack={() => setView(journey.onboarded ? "home" : "reveal")}
         />
       );
       break;
@@ -152,13 +151,11 @@ export default function App() {
       );
       break;
 
-    case "path":
+    case "stride":
       body = (
-        <Path
-          journey={journey}
-          step={step}
-          onBack={() => setView("home")}
-          onEdit={() => setView("q1")}
+        <Stride
+          moved={climb?.moved ?? false}
+          onDone={() => setView("home")}
         />
       );
       break;
@@ -197,8 +194,8 @@ export default function App() {
           climb={climb}
           onClimbEnd={endClimb}
           onLog={() => setView("log")}
-          onPath={() => setView("path")}
           onRecords={() => setView("records")}
+          onEdit={() => setView("q1")}
           onAbout={() => setView("about")}
         />
       );

@@ -28,6 +28,10 @@ interface Props {
   walking?: boolean;
   /** step number to light up with a burst, once */
   spark?: number | null;
+  /** what the burst means: reached, missed, or recovered */
+  sparkTone?: "green" | "red" | "blue";
+  /** step left burning red by a blank day */
+  missed?: number | null;
   /** dates written above the path — the start, and each new month */
   labels?: StepLabel[];
   /** let the reader turn the mountain by hand */
@@ -49,6 +53,8 @@ export function Mountain({
   view = "follow",
   walking = false,
   spark = null,
+  sparkTone = "green",
+  missed = null,
   labels = [],
   spinnable = false,
   children,
@@ -73,8 +79,10 @@ export function Mountain({
   const [spun, setSpun] = useState<Face | null>(null);
   useEffect(() => setSpun(null), [step]);
 
-  const climbFace: Face = view === "full" ? "front" : target.face;
-  const wantedFace: Face = view === "full" ? "front" : spun ?? climbFace;
+  // Even pulled back to the whole mountain, the view follows whichever side he
+  // is on — otherwise he vanishes for the ten steps round the back.
+  const climbFace: Face = target.face;
+  const wantedFace: Face = spun ?? climbFace;
   const showClimber = wantedFace === climbFace;
 
   // The turn: hold the old side until the veil is down, then swap.
@@ -150,6 +158,8 @@ export function Mountain({
 
   const hidden = STEPS.filter((s) => s.face === "back");
   const sparkStep = spark ? stepAt(spark) : null;
+  const missedStep = missed ? stepAt(missed) : null;
+  const showMissed = missedStep && missedStep.face === face;
 
   const onFace = labels.filter((l) => stepAt(l.step).face === face);
 
@@ -239,6 +249,21 @@ export function Mountain({
             sit in the same light as the painting. */}
         {face === "back" && <div className="far-side" aria-hidden />}
 
+        {showMissed && (
+          <div
+            className="marker missed"
+            style={{
+              left: `${missedStep.x}%`,
+              top: `${missedStep.y}%`,
+              width: `${missedStep.w * 1.24}%`,
+              height: `${missedStep.h * 1.05}%`,
+            }}
+            aria-hidden
+          >
+            <span>{missed}</span>
+          </div>
+        )}
+
         {onFace.map((l) => {
           const s = stepAt(l.step);
           return (
@@ -255,8 +280,8 @@ export function Mountain({
 
         {sparkStep && (
           <div
-            key={`spark-${spark}`}
-            className="spark"
+            key={`spark-${spark}-${sparkTone}`}
+            className={`spark ${sparkTone}`}
             style={{
               left: `${sparkStep.x}%`,
               top: `${sparkStep.y}%`,
@@ -268,16 +293,27 @@ export function Mountain({
         )}
 
         {showClimber && (
+          // The transform is written out rather than built from custom
+          // properties: custom properties do not interpolate, so a var() in
+          // here would teleport him to the next step instead of walking it.
           <div
             className={`climber ${walking ? "walking" : ""}`}
             style={{
-              ["--cx" as string]: `${target.x}%`,
-              ["--cy" as string]: `${target.y + target.h * 0.1}%`,
-              ["--ch" as string]: `${climberHeight(target)}%`,
-              ["--travel" as string]: walking ? "1500ms" : "1100ms",
+              transform: `translate(${target.x}%, ${
+                target.y + target.h * 0.1
+              }%)`,
+              transitionDuration: walking ? "1500ms" : "1100ms",
             }}
           >
-            <img src="/art/margorn.png" alt="" draggable={false} />
+            <img
+              src="/art/margorn.png"
+              alt=""
+              draggable={false}
+              style={{
+                height: `${climberHeight(target)}%`,
+                transitionDuration: walking ? "1500ms" : "1100ms",
+              }}
+            />
           </div>
         )}
       </div>

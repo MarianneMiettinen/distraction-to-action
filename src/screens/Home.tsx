@@ -1,13 +1,16 @@
 import { useEffect, useState } from "react";
 import { Mountain } from "../Mountain";
 import { loop, play, stop } from "../audio";
-import { OrnateButton, RatioBar, SoundButton } from "../ui";
+import { OrnateButton, RatioBar, ScreenTitle, SoundButton } from "../ui";
 import { TOTAL_STEPS } from "../path";
 import {
+  daysLeft,
   daysMoved,
   formatMinutes,
   formatRatio,
+  litStep,
   logFor,
+  missedStep,
   pathLabels,
   ratios,
   today,
@@ -36,13 +39,17 @@ const LINES = [
   "Steady beats sudden.",
 ];
 
+/**
+ * The whole climb, and the only home: the mountain entire, what today did to
+ * it, and every way on from here.
+ */
 export function Home({
   journey,
   climb,
   onClimbEnd,
   onLog,
-  onPath,
   onRecords,
+  onEdit,
   onAbout,
   step,
 }: {
@@ -51,15 +58,16 @@ export function Home({
   climb: Climb | null;
   onClimbEnd: () => void;
   onLog: () => void;
-  onPath: () => void;
   onRecords: () => void;
+  onEdit: () => void;
   onAbout: () => void;
 }) {
-  // While a climb is playing, the camera starts where he was and walks up.
+  // While a climb is playing, he starts where he was and walks up.
   const [shown, setShown] = useState(step);
   const [lit, setLit] = useState(Math.floor(step));
   const [walking, setWalking] = useState(false);
   const [spark, setSpark] = useState<number | null>(null);
+  const [tone, setTone] = useState<"green" | "red" | "blue">("green");
   const [caption, setCaption] = useState<string | null>(null);
 
   useEffect(() => {
@@ -82,12 +90,19 @@ export function Home({
           `Another ${formatMinutes(climb.focusAdded)}. Already on step ${landed} today.`
         );
       } else {
-        setCaption("No step today. The mountain keeps your place.");
-        play("noStep");
+        // The step ahead catches fire and waits there for you.
+        const ahead = missedStep(journey);
+        setTone("red");
+        setCaption("No step today. The one ahead is waiting.");
+        timers.push(
+          window.setTimeout(() => {
+            if (ahead) setSpark(ahead);
+            play("noStep");
+          }, 350)
+        );
       }
-      timers.push(window.setTimeout(onClimbEnd, 2600));
+      timers.push(window.setTimeout(onClimbEnd, 3000));
     } else {
-      // He walks first; the step only lights once he is standing on it.
       setShown(climb.from);
       setLit(Math.floor(climb.from));
       setWalking(true);
@@ -100,6 +115,8 @@ export function Home({
           setWalking(false);
           stop("walk");
           if (gained) {
+            // Coming back off a blank day lights the red step blue instead.
+            setTone(climb.returned ? "blue" : "green");
             setSpark(landed);
             play(climb.returned ? "returned" : "step");
           }
@@ -123,6 +140,7 @@ export function Home({
       setWalking(false);
       setCaption(null);
       setSpark(null);
+      setTone("green");
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [climb]);
@@ -130,72 +148,80 @@ export function Home({
   const { recent, opening } = ratios(journey);
   const todays = logFor(journey, today());
   const busy = climb !== null;
-  // The strip has one line to work with, so it names the first pursuit rather
-  // than truncating both.
   const pursuit = journey.pursuits[0]?.trim() || "your work";
   const dayNumber = Math.min(daysMoved(journey) + 1, journey.totalDays);
+  const remaining = daysLeft(journey);
+  const here = litStep(journey);
 
   return (
     <div className="screen">
       <header className="row spread home-head">
         <div>
-          <h1 className="eyebrow app-name">Distraction to Action</h1>
+          <ScreenTitle>Home — The Whole Climb</ScreenTitle>
           <p className="meta home-day">
-            Day {dayNumber} of {journey.totalDays}
+            Day {dayNumber} of {journey.totalDays} ·{" "}
+            {remaining > 0
+              ? `${remaining} ${remaining === 1 ? "day" : "days"} to go`
+              : "the summit"}
           </p>
         </div>
         <SoundButton />
       </header>
 
-      <Mountain
-        className="grow"
-        step={shown}
-        lit={lit}
-        walking={walking}
-        spark={spark}
-        labels={pathLabels(journey)}
-        spinnable={!busy}
-      >
-        <div className="scene-badge">
-          <p className="eyebrow">
-            Step {lit} of {TOTAL_STEPS}
-          </p>
-          {todays && (
-            <p className="meta scene-today">
-              Today · {formatMinutes(todays.focusMin)}
+      <div className="grow row center scene-slot">
+        <Mountain
+          className="scene-fit"
+          view="full"
+          step={shown}
+          lit={lit}
+          walking={walking}
+          spark={spark}
+          sparkTone={tone}
+          missed={missedStep(journey)}
+          labels={pathLabels(journey)}
+          spinnable={!busy}
+        >
+          <div className="scene-badge">
+            <p className="eyebrow">
+              Step {lit} of {TOTAL_STEPS}
             </p>
-          )}
-        </div>
+            {todays && (
+              <p className="meta scene-today">
+                Today · {formatMinutes(todays.focusMin)}
+              </p>
+            )}
+          </div>
 
-        <div className="scene-caption" aria-live="polite">
-          {caption && <p className="serif scene-line">{caption}</p>}
-        </div>
-      </Mountain>
+          <div className="scene-caption" aria-live="polite">
+            {caption && <p className="serif scene-line">{caption}</p>}
+          </div>
+        </Mountain>
+      </div>
 
       <div className="stack ratio-strip">
-        <div className="row spread ratio-line">
-          <p className="meta">
-            {recent.noLoss ? (
-              <>
-                <b className="figure">{formatMinutes(recent.focus)}</b> toward{" "}
-                {pursuit}, none lost
-              </>
-            ) : (
-              <>
-                <b className="figure">{formatRatio(recent.value)}</b>{" "}
-                {recent.value === null
-                  ? "nothing logged yet"
-                  : `on ${pursuit} for every hour lost`}
-              </>
-            )}
-          </p>
-          {opening?.value != null && recent.value != null && (
-            <p className="meta ratio-then">
-              {recent.value >= opening.value ? "up from" : "was"}{" "}
-              {formatRatio(opening.value)}
-            </p>
+        {/* One sentence, so it wraps without leaving a hole beside it. */}
+        <p className="meta ratio-line">
+          {recent.noLoss ? (
+            <>
+              <b className="figure">{formatMinutes(recent.focus)}</b> toward{" "}
+              {pursuit}, none lost
+            </>
+          ) : (
+            <>
+              <b className="figure">{formatRatio(recent.value)}</b>{" "}
+              {recent.value === null
+                ? "nothing logged yet"
+                : `on ${pursuit} for every hour lost`}
+            </>
           )}
-        </div>
+          {opening?.value != null && recent.value != null && (
+            <span className="ratio-then">
+              {" "}
+              — {recent.value >= opening.value ? "up from" : "was"}{" "}
+              {formatRatio(opening.value)}
+            </span>
+          )}
+        </p>
         <RatioBar focus={recent.focus} distract={recent.distract} />
       </div>
 
@@ -206,11 +232,11 @@ export function Home({
       </div>
 
       <nav className="nav-row" aria-label="Elsewhere in the climb">
-        <OrnateButton onClick={onPath} disabled={busy} small>
-          The whole climb
-        </OrnateButton>
         <OrnateButton onClick={onRecords} disabled={busy} small>
           Records
+        </OrnateButton>
+        <OrnateButton onClick={onEdit} disabled={busy} small>
+          Change tracking
         </OrnateButton>
       </nav>
 
@@ -218,6 +244,9 @@ export function Home({
         <button type="button" className="link" onClick={onAbout}>
           Attributions
         </button>
+        <span className="sr-only">
+          Step {here} of {TOTAL_STEPS}.
+        </span>
       </div>
     </div>
   );

@@ -1,8 +1,12 @@
 /**
  * Sound, kept deliberately small: one ambient loop and a handful of one-shots.
  *
- * Nothing is fetched until the user actually turns sound on — the music track
- * is several megabytes, and browsers block autoplay before a gesture anyway.
+ * The note button turns the *music* on and off. Effects are feedback — a step
+ * landing, a hand on stone — so they keep playing either way; silencing them
+ * along with the soundtrack would take the response out of the interface.
+ *
+ * The music file is several megabytes, so it is only fetched once it is wanted,
+ * and browsers block autoplay before a gesture anyway.
  */
 
 const SFX = {
@@ -49,7 +53,7 @@ const START: Partial<Record<Sfx, number>> = {
 const MUSIC = "/music/grand_project-wonders-of-the-earth-550792.mp3";
 const KEY = "distraction-to-action.sound";
 
-let on = (() => {
+let musicOn = (() => {
   try {
     return localStorage.getItem(KEY) !== "off";
   } catch {
@@ -72,7 +76,6 @@ function clip(name: Sfx) {
 }
 
 export function play(name: Sfx) {
-  if (!on) return;
   const el = clip(name);
   const from = START[name] ?? 0;
   try {
@@ -86,7 +89,6 @@ export function play(name: Sfx) {
 }
 
 export function loop(name: Sfx) {
-  if (!on) return;
   const el = clip(name);
   el.loop = true;
   void el.play().catch(() => {});
@@ -107,39 +109,36 @@ function startMusic() {
   if (!music) {
     music = new Audio(MUSIC);
     music.loop = true;
-    music.volume = 0.22;
+    // Sits under the effects rather than competing with them.
+    music.volume = 0.12;
   }
   void music.play().catch(() => {});
 }
 
-export function soundOn() {
-  return on;
+export function musicPlaying() {
+  return musicOn;
 }
 
-export function toggleSound() {
-  on = !on;
+export function toggleMusic() {
+  musicOn = !musicOn;
   try {
-    localStorage.setItem(KEY, on ? "on" : "off");
+    localStorage.setItem(KEY, musicOn ? "on" : "off");
   } catch {
     /* ignore */
   }
-  if (on) {
-    startMusic();
-    play("tap");
-  } else {
-    music?.pause();
-    clips.forEach((el) => el.pause());
-  }
-  listeners.forEach((fn) => fn(on));
-  return on;
+  if (musicOn) startMusic();
+  else music?.pause();
+  play("tap");
+  listeners.forEach((fn) => fn(musicOn));
+  return musicOn;
 }
 
 /** Browsers need a gesture before any of this is allowed to make a noise. */
 export function wakeAudio() {
-  if (on) startMusic();
+  if (musicOn) startMusic();
 }
 
-export function onSoundChange(fn: (on: boolean) => void) {
+export function onMusicChange(fn: (on: boolean) => void) {
   listeners.add(fn);
   return () => {
     listeners.delete(fn);

@@ -40,7 +40,7 @@ export function Reveal({ onNext, onBack }: { onNext: () => void; onBack: () => v
         <div className="reveal-veil" aria-hidden />
         <div className="reveal-copy">
           <p className="eyebrow">Your climber</p>
-          <h2 className="reveal-name">This is Margorn.</h2>
+          <h1 className="reveal-name">This is Margorn.</h1>
           <p className="meta reveal-text">
             He carries the ring you are trying to be rid of. He climbs only when
             you do something that matters — however small.
@@ -107,36 +107,38 @@ function TwoThings({
       </h1>
       <p className="meta">{hint}</p>
 
-      <StoneCard lit className="grow">
-        <div className="fields" role="group" aria-labelledby={`${id}-heading`}>
-          <label className="field-row">
-            <span className="sr-only">{first}</span>
-            <input
-              className="field"
-              value={one}
-              placeholder={first}
-              autoFocus
-              maxLength={40}
-              enterKeyHint="next"
-              onChange={(e) => set(0, e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && advance()}
-            />
-          </label>
+      <div className="grow settle stack">
+        <StoneCard lit className="card-compact">
+          <div className="fields" role="group" aria-labelledby={`${id}-heading`}>
+            <label className="field-row">
+              <span className="sr-only">{first}</span>
+              <input
+                className="field"
+                value={one}
+                placeholder={first}
+                autoFocus
+                maxLength={40}
+                enterKeyHint="next"
+                onChange={(e) => set(0, e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && advance()}
+              />
+            </label>
 
-          <label className="field-row" hidden={!one.trim()}>
-            <span className="sr-only">{second}</span>
-            <input
-              className="field"
-              value={two}
-              placeholder={second}
-              maxLength={40}
-              enterKeyHint="done"
-              onChange={(e) => set(1, e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && advance()}
-            />
-          </label>
-        </div>
-      </StoneCard>
+            <label className="field-row" hidden={!one.trim()}>
+              <span className="sr-only">{second}</span>
+              <input
+                className="field"
+                value={two}
+                placeholder={second}
+                maxLength={40}
+                enterKeyHint="done"
+                onChange={(e) => set(1, e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && advance()}
+              />
+            </label>
+          </div>
+        </StoneCard>
+      </div>
 
       <div className="row center">
         <OrnateButton onClick={advance} disabled={!one.trim()}>

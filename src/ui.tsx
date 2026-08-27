@@ -1,5 +1,5 @@
 import { useEffect, useState, type ReactNode } from "react";
-import { onSoundChange, play, soundOn, toggleSound, wakeAudio } from "./audio";
+import { musicPlaying, onMusicChange, play, toggleMusic, wakeAudio } from "./audio";
 
 export function OrnateButton({
   children,
@@ -49,16 +49,20 @@ export function ScreenTitle({ children }: { children: ReactNode }) {
   return <h1 className="eyebrow screen-title">{children}</h1>;
 }
 
+/** Turns the soundtrack on and off. Effects are unaffected — see audio.ts. */
 export function SoundButton() {
-  const [on, setOn] = useState(soundOn);
-  useEffect(() => onSoundChange(setOn), []);
+  const [on, setOn] = useState(musicPlaying);
+  useEffect(() => onMusicChange(setOn), []);
   return (
     <button
       type="button"
       className={`sound-btn ${on ? "" : "muted"}`}
-      onClick={() => setOn(toggleSound())}
+      onClick={() => {
+        wakeAudio();
+        setOn(toggleMusic());
+      }}
       aria-pressed={on}
-      aria-label={on ? "Turn sound off" : "Turn sound on"}
+      aria-label={on ? "Turn the music off" : "Turn the music on"}
     />
   );
 }

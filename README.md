@@ -5,6 +5,10 @@ two that deserve your hours; every day you give any time at all to the second
 kind, Margorn gains ground and the step he reaches turns from purple to green.
 Steps already climbed stay green. Nothing ever pushes him back down.
 
+A blank day is not punished — it leaves the step ahead burning red, waiting.
+Walking onto it later lights it blue rather than green: a recovery, not a
+streak.
+
 The point is not a productivity dashboard. It is visible evidence that
 deliberate choices are accumulating — and that the ratio of time given to time
 lost is moving the right way.
@@ -40,6 +44,10 @@ the steps have to change colour. `tools/prepare_assets.py` handles both:
   to green. The app reveals that copy through ellipse masks at the steps already
   climbed, so a completed step keeps the original brushwork instead of being
   covered by a flat CSS shape.
+
+Logging opens with Margorn striding into frame, then cuts to the mountain for
+the step itself — a close shot and a wide one, so the step reads as something he
+does rather than a number changing.
 
 Ten of the thirty steps are round the back of the spiral. The mountain turns to
 follow the climb, and can be turned by hand — swipe it, or use the arrows on
